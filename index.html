@@ -187,6 +187,17 @@
             70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
             100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
         }
+        @keyframes confettiFall {
+            0% { transform: translateY(-100vh) rotate(0deg) scale(1); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; }
+        }
+        .confetti-piece {
+            position: fixed; top: -20px; z-index: 9999;
+            width: 10px; height: 10px;
+            border-radius: 2px;
+            animation: confettiFall 3s ease-in forwards;
+            pointer-events: none;
+        }
         @keyframes gradientBorder {
             0% { border-image: linear-gradient(145deg, var(--primary), var(--primary-light)) 1; }
             50% { border-image: linear-gradient(145deg, var(--primary-light), #c084fc) 1; }
@@ -1952,7 +1963,7 @@
                     <!-- Dashboard -->
                     <div class="module-page active" id="page-dashboard">
                         <div class="module-header"><h2><i class="fas fa-chart-pie"></i> Resumen del negocio</h2></div>
-                        <div class="widgets-grid animate-stagger" id="widgetsAdmin"></div>
+                        <div class="widgets-grid animate-stagger" id="widgetsAdmin"><div class="widget"><div class="skeleton skeleton-title" style="width:40%"></div><div class="skeleton skeleton-text" style="width:60%;height:36px;margin:12px 0"></div><div class="skeleton skeleton-text" style="width:25%"></div></div><div class="widget"><div class="skeleton skeleton-title" style="width:40%"></div><div class="skeleton skeleton-text" style="width:60%;height:36px;margin:12px 0"></div><div class="skeleton skeleton-text" style="width:25%"></div></div><div class="widget"><div class="skeleton skeleton-title" style="width:40%"></div><div class="skeleton skeleton-text" style="width:60%;height:36px;margin:12px 0"></div><div class="skeleton skeleton-text" style="width:25%"></div></div><div class="widget"><div class="skeleton skeleton-title" style="width:40%"></div><div class="skeleton skeleton-text" style="width:60%;height:36px;margin:12px 0"></div><div class="skeleton skeleton-text" style="width:25%"></div></div></div>
                         <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
                             <div class="chart-container"><canvas id="chartAdmin"></canvas></div>
                             <div class="activity-list"><h3>Actividad reciente</h3><div id="activityAdmin"></div></div>
@@ -2035,9 +2046,9 @@
                 <div class="logo">Nova<span>Clean</span></div>
                 <nav>
                     <ul>
-                        <li><a href="#" data-page="dashboard" class="active"><i class="fas fa-home"></i> Mi día</a></li>
+                        <li><a href="#" data-page="dashboard-emp" class="active"><i class="fas fa-home"></i> Mi día</a></li>
                         <li><a href="#" data-page="myjobs"><i class="fas fa-tasks"></i> Mis trabajos</a></li>
-                        <li><a href="#" data-page="reports"><i class="fas fa-file-alt"></i> Mis reportes</a></li>
+                        <li><a href="#" data-page="reports-emp"><i class="fas fa-file-alt"></i> Mis reportes</a></li>
                     </ul>
                 </nav>
                 <div class="sidebar-footer">
@@ -2062,9 +2073,9 @@
                 </header>
                 <main class="dash-content">
                     <!-- Dashboard empleado -->
-                    <div class="module-page active" id="page-dashboard">
+                    <div class="module-page active" id="page-dashboard-emp">
                         <div class="module-header"><h2><i class="fas fa-chart-pie"></i> Mi jornada</h2></div>
-                        <div class="widgets-grid animate-stagger" id="widgetsEmpleado"></div>
+                        <div class="widgets-grid animate-stagger" id="widgetsEmpleado"><div class="widget"><div class="skeleton skeleton-title" style="width:40%"></div><div class="skeleton skeleton-text" style="width:60%;height:36px;margin:12px 0"></div></div><div class="widget"><div class="skeleton skeleton-title" style="width:40%"></div><div class="skeleton skeleton-text" style="width:60%;height:36px;margin:12px 0"></div></div><div class="widget"><div class="skeleton skeleton-title" style="width:40%"></div><div class="skeleton skeleton-text" style="width:60%;height:36px;margin:12px 0"></div></div><div class="widget"><div class="skeleton skeleton-title" style="width:40%"></div><div class="skeleton skeleton-text" style="width:60%;height:36px;margin:12px 0"></div></div></div>
                         <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
                             <div class="chart-container"><canvas id="chartEmpleado"></canvas></div>
                             <div class="activity-list"><h3>Mis tareas recientes</h3><div id="activityEmpleado"></div></div>
@@ -2079,7 +2090,7 @@
                         <div class="reservas-grid animate-stagger" id="myJobsGrid"></div>
                     </div>
                     <!-- Mis reportes -->
-                    <div class="module-page" id="page-reports">
+                    <div class="module-page" id="page-reports-emp">
                         <div class="module-header"><h2><i class="fas fa-file-alt"></i> Mis reportes</h2></div>
                         <div id="myReportsContainer" class="glass glass-gradient" style="padding:24px;min-height:160px;border-radius:var(--radius);"><p style="color:var(--text-secondary);text-align:center;padding:40px 0;">Aún no has enviado reportes.</p></div>
                         <div style="margin-top:24px;"><h3 style="font-weight:600;margin-bottom:12px;">Fotos que he subido</h3><div id="galleryEmpleado" class="photo-gallery"></div></div>
@@ -2191,14 +2202,21 @@
             },
             _ready: false,
 
-            // Cargar datos desde Firebase
+            // Cargar datos desde Firebase (con timeout)
             async loadData() {
                 const bar = document.getElementById('loadingBar');
                 if (bar) { bar.style.width = '20%'; bar.style.opacity = '1'; }
                 try {
-                    if (bar) bar.style.width = '50%';
-                    const snapshot = await db.ref('/').once('value');
-                    if (bar) bar.style.width = '85%';
+                    if (bar) bar.style.width = '40%';
+                    // Timeout de 8s para Firebase
+                    const timeout = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Firebase timeout')), 8000)
+                    );
+                    const snapshot = await Promise.race([
+                        db.ref('/').once('value'),
+                        timeout
+                    ]);
+                    if (bar) bar.style.width = '80%';
                     const data = snapshot.val();
                     if (data) {
                         this._state.reservas = data.reservas || [];
@@ -2207,18 +2225,27 @@
                         this._state.reportes = data.reportes || [];
                         this._state.nextId = data.nextId || 1;
                     } else {
-                        // Si no hay datos, sembrar datos iniciales
                         await this._seed();
                     }
                     this._ready = true;
+                    // Listener en tiempo real para cambios de otros usuarios/tabs
+                    db.ref('/').on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            this._state.reservas = data.reservas || [];
+                            this._state.clientes = data.clientes || [];
+                            this._state.empleados = data.empleados || [];
+                            this._state.reportes = data.reportes || [];
+                            this._state.nextId = data.nextId || 1;
+                            if (this._ready && window.App && window.App.refreshAll) {
+                                window.App.refreshAll();
+                            }
+                        }
+                    }, (err) => console.warn('Firebase listener error:', err));
                     if (bar) { bar.style.width = '100%'; setTimeout(() => { bar.style.opacity = '0'; setTimeout(() => { bar.style.width = '0'; }, 400); }, 300); }
-                    // Notificar a la UI que los datos están listos
-                    if (window._appReady) window._appReady();
                 } catch (error) {
+                    console.warn('Firebase no disponible, usando datos locales:', error.message);
                     if (bar) { bar.style.width = '100%'; setTimeout(() => { bar.style.opacity = '0'; setTimeout(() => { bar.style.width = '0'; }, 400); }, 300); }
-                    console.error('Error al cargar datos de Firebase:', error);
-                    UI.toast('Error al conectar con la base de datos', 'error', 'Firebase');
-                    // Fallback: seed local
                     this._seedLocal();
                 }
             },
@@ -2377,7 +2404,6 @@
                 }];
                 this._state.nextId = 100;
                 this._ready = true;
-                if (window._appReady) window._appReady();
             },
 
             // Guardar todo en Firebase
@@ -2819,6 +2845,26 @@
         };
 
         // ============================================================
+        //  CONFETTI 🎉
+        // ============================================================
+        function fireConfetti(count = 60) {
+            const colors = ['#7c3aed','#a855f7','#c084fc','#f59e0b','#22c55e','#e11d48','#0ea5e9','#f97316'];
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.className = 'confetti-piece';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                el.style.width = (6 + Math.random() * 8) + 'px';
+                el.style.height = (6 + Math.random() * 8) + 'px';
+                el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                el.style.animationDuration = (2 + Math.random() * 2) + 's';
+                el.style.animationDelay = Math.random() * 0.5 + 's';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 5000);
+            }
+        }
+
+        // ============================================================
         //  MAIN APP
         // ============================================================
         const App = {
@@ -2833,14 +2879,13 @@
                 if (this._initialized) return;
                 this._initialized = true;
 
-                // Escuchar cuando los datos estén listos
-                window._appReady = () => {
-                    console.log('Datos cargados desde Firebase');
-                    this._setupUI();
-                };
+                // 1. Montar la UI inmediatamente (landing visible, botones funcionales)
+                this._setupUI();
 
-                // Cargar datos
-                Data.loadData().catch(() => {});
+                // 2. Cargar datos en segundo plano — cuando lleguen, refrescan la UI
+                Data.loadData().then(() => {
+                    if (this._currentRole) this.refreshAll();
+                }).catch(() => {});
             },
 
             _setupUI() {
@@ -2849,12 +2894,25 @@
                 document.getElementById('dashboard-admin').style.display = 'none';
                 document.getElementById('dashboard-empleado').style.display = 'none';
 
+                // Restaurar tema guardado
+                const saved = localStorage.getItem('novaclean-theme');
+                if (saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.querySelectorAll('#themeIconAdmin, #themeIconEmpleado').forEach(el => {
+                        el.className = 'fas fa-sun';
+                    });
+                }
+
                 // Listeners
                 document.getElementById('loginBtn').addEventListener('click', () => {
                     this.login(document.getElementById('loginRole').value);
                 });
                 document.getElementById('registerBtn').addEventListener('click', () => { this.register(); });
                 document.getElementById('getLocationBtn').addEventListener('click', () => { this.getLocation(); });
+                const fechaInput = document.getElementById('registerFecha');
+                if (fechaInput && !fechaInput.value) {
+                    fechaInput.value = new Date().toISOString().split('T')[0];
+                }
                 document.getElementById('saveJobBtn').addEventListener('click', () => { this.saveJob(); });
                 document.getElementById('saveClientBtn').addEventListener('click', () => { this.saveClient(); });
                 document.getElementById('saveEmployeeBtn').addEventListener('click', () => { this.saveEmployee(); });
@@ -2872,12 +2930,27 @@
                     const preview = document.getElementById('photoPreview');
                     if (!window._fotos) window._fotos = [];
                     for (let f of files) {
+                        const idx = window._fotos.length;
                         window._fotos.push(f);
                         const reader = new FileReader();
                         reader.onload = (ev) => {
+                            const wrap = document.createElement('div');
+                            wrap.style.cssText = 'position:relative;display:inline-block;';
                             const img = document.createElement('img');
                             img.src = ev.target.result;
-                            preview.appendChild(img);
+                            const del = document.createElement('button');
+                            del.innerHTML = '<i class="fas fa-times"></i>';
+                            del.style.cssText =
+                                'position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:0.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:transform 0.2s;';
+                            del.addEventListener('mouseenter', () => { del.style.transform = 'scale(1.2)'; });
+                            del.addEventListener('mouseleave', () => { del.style.transform = 'scale(1)'; });
+                            del.addEventListener('click', () => {
+                                window._fotos[idx] = null;
+                                wrap.remove();
+                            });
+                            wrap.appendChild(img);
+                            wrap.appendChild(del);
+                            preview.appendChild(wrap);
                         };
                         reader.readAsDataURL(f);
                     }
@@ -2902,7 +2975,7 @@
                         this.undo(); }
                 });
 
-                // Scroll shadow on landing nav + back-to-top + pricing CTA
+                // Scroll shadow on landing nav + back-to-top
                 document.addEventListener('scroll', () => {
                     const nav = document.querySelector('.landing-nav');
                     if (nav) {
@@ -2938,9 +3011,13 @@
                         if (page === 'dashboard' && sidebar.id === 'sidebarAdmin') {
                             Dashboard.renderAdmin();
                         }
-                        if (page === 'dashboard' && sidebar.id === 'sidebarEmpleado') {
+                        if (page === 'dashboard-emp' && sidebar.id === 'sidebarEmpleado') {
                             const uid = App._currentUser?.userId || App._currentUser?.id;
                             if (uid) Dashboard.renderEmpleado(uid);
+                        }
+                        if (page === 'reports-emp' && sidebar.id === 'sidebarEmpleado') {
+                            const uid = App._currentUser?.userId || App._currentUser?.id;
+                            if (uid) App._renderMyReports(uid);
                         }
                         if (page === 'reports' && sidebar.id === 'sidebarAdmin') {
                             App._renderReportsAdmin();
@@ -3032,17 +3109,19 @@
 
             toggleTheme() {
                 const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-                document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+                const next = dark ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('novaclean-theme', next);
                 document.querySelectorAll('#themeIconAdmin, #themeIconEmpleado').forEach(el => {
                     el.className = dark ? 'fas fa-moon' : 'fas fa-sun';
                     el.style.animation = 'none';
                     void el.offsetWidth;
                     el.style.animation = 'themeRotate 0.5s ease';
                 });
-                if (this._currentRole === 'admin') Dashboard.renderAdmin();
+                if (this._currentRole === 'admin') { if (Dashboard._chartAdmin) Dashboard._chartAdmin.destroy(); Dashboard.renderAdmin(); }
                 else if (this._currentRole === 'empleado') {
                     const uid = this._currentUser?.userId || this._currentUser?.id;
-                    if (uid) Dashboard.renderEmpleado(uid);
+                    if (uid) { if (Dashboard._chartEmpleado) Dashboard._chartEmpleado.destroy(); Dashboard.renderEmpleado(uid); }
                 }
             },
 
@@ -3408,9 +3487,16 @@
             },
 
             async changeStatus(id, status) {
-                await Data.updateReserva(id, { estado: status });
-                this.refreshAll();
-                UI.toast(`Estado cambiado a ${Data.getEstadoLabel(status)}`, 'info', 'Actualizado');
+                const r = Data.getReserva(id);
+                if (r) {
+                    const oldStatus = r.estado;
+                    r.estado = status;
+                    r.updatedAt = new Date().toISOString();
+                    this.refreshAll();
+                    UI.toast(`Estado cambiado a ${Data.getEstadoLabel(status)}`, 'info', 'Actualizado');
+                    if (status === 'done') fireConfetti();
+                    await Data._save();
+                }
             },
 
             async startJob(id) {
@@ -3448,7 +3534,7 @@
             async saveReport() {
                 const jobId = document.getElementById('reportJobId').value;
                 const texto = document.getElementById('reportTexto').value.trim();
-                const fotos = window._fotos || [];
+                const fotos = (window._fotos || []).filter(f => f !== null);
                 const firmaTrab = document.getElementById('firmaTrabajador').value.trim();
                 const firmaCli = document.getElementById('firmaCliente').value.trim();
                 if (!texto && !fotos.length) {
